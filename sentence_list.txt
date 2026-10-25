@@ -1,0 +1,24 @@
+# Correct sentence templates (for approval)
+Hello, how are you
+I am fine, thank you
+What is your name
+My name is
+How can I help you
+Tell me a joke
+Why did the chicken cross the road
+What is the weather like
+I don't understand
+Could you explain that
+Thank you
+Goodbye
+
+# Error patterns -> corrections
+was an -> He was an
+is a game which -> It is a game that
+the reason why is because -> The reason is that
+more better -> better
+most best -> best
+ain't -> isn't
+should of -> should have
+could of -> could have
+would of -> would have
