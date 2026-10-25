@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0d0d0d;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 40px 50px;
+            max-width: 850px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+        h1 { font-weight:400; font-size:28px; margin-bottom:10px; color:#eee; display:flex; align-items:center; gap:12px; }
+        h1 small { font-size:16px; font-weight:300; color:#888; }
+        .pin-section, .panel-section { margin-top:25px; }
+        .pin-section.hidden, .panel-section.hidden { display:none; }
+        .form-group { margin-bottom:18px; }
+        label { display:block; font-size:14px; color:#aaa; margin-bottom:5px; }
+        input, select, textarea {
+            width:100%;
+            padding:12px 14px;
+            background:#252525;
+            border:1px solid #333;
+            border-radius:8px;
+            color:#e0e0e0;
+            font-size:15px;
+            outline:none;
+            transition:border 0.2s;
+            font-family: inherit;
+        }
+        input:focus, select:focus, textarea:focus { border-color:#5a9eff; }
+        input[type="file"] { padding:8px 10px; background:transparent; border:none; color:#aaa; }
+        input[type="file"]::file-selector-button {
+            background:#2a2a2a;
+            color:#e0e0e0;
+            border:none;
+            padding:8px 16px;
+            border-radius:6px;
+            cursor:pointer;
+            transition:background 0.2s;
+        }
+        input[type="file"]::file-selector-button:hover { background:#3a3a3a; }
+        .btn {
+            background:#2a5a7a;
+            border:none;
+            color:#fff;
+            padding:12px 24px;
+            border-radius:8px;
+            font-size:16px;
+            font-weight:500;
+            cursor:pointer;
+            transition:background 0.2s, transform 0.1s;
+            width:100%;
+        }
+        .btn:hover { background:#3a7aaa; }
+        .btn:active { transform:scale(0.98); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-danger { background:#6a2a2a; }
+        .btn-danger:hover { background:#8a3a3a; }
+        .btn-secondary { background:#333; }
+        .btn-secondary:hover { background:#444; }
+        .btn-group { display:flex; gap:12px; flex-wrap:wrap; }
+        .btn-group .btn { flex:1; min-width:120px; }
+        .status {
+            margin-top:20px;
+            padding:12px 16px;
+            border-radius:8px;
+            background:#222;
+            color:#ccc;
+            font-size:14px;
+            min-height:50px;
+            border-left:4px solid #5a9eff;
+            white-space:pre-wrap;
+            word-break:break-word;
+        }
+        .status.error { border-left-color:#ff6b6b; background:#2a1a1a; }
+        .status.success { border-left-color:#6bff6b; background:#1a2a1a; }
+        .back-link {
+            display:inline-block;
+            margin-top:20px;
+            color:#888;
+            text-decoration:none;
+            font-size:14px;
+            transition:color 0.2s;
+        }
+        .back-link:hover { color:#fff; }
+        .stats-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
+            gap:12px;
+            margin:16px 0;
+        }
+        .stat-card {
+            background:#252525;
+            padding:12px 16px;
+            border-radius:8px;
+            border-left:3px solid #5a9eff;
+        }
+        .stat-card.transformer { border-left-color: #b06bff; }
+        .stat-card .stat-label { font-size:12px; color:#888; text-transform:uppercase; letter-spacing:0.5px; }
+        .stat-card .stat-value { font-size:22px; font-weight:500; color:#eee; margin-top:4px; }
+        .stat-card .stat-sub { font-size:13px; color:#aaa; }
+        .flex-row { display:flex; align-items:center; gap:12px; }
+        .flex-row .btn { width:auto; flex-shrink:0; }
+        .file-info { font-size:13px; color:#888; margin-top:4px; }
+
+        #progress-container {
+            display:none;
+            margin:12px 0;
+            background:#252525;
+            border-radius:8px;
+            padding:14px 18px;
+            border:1px solid #333;
+        }
+        #progress-container.active { display:block; }
+        #progress-bar-bg {
+            width:100%;
+            height:12px;
+            background:#1a1a1a;
+            border-radius:6px;
+            overflow:hidden;
+            margin-top:6px;
+        }
+        #progress-bar-fill {
+            height:100%;
+            width:0%;
+            background:linear-gradient(90deg, #2a5a7a, #5a9eff);
+            border-radius:6px;
+            transition:width 0.3s ease;
+        }
+        #progress-text { display:flex; justify-content:space-between; font-size:14px; color:#ccc; }
+        .progress-message { color:#aaa; }
+        .progress-percent { font-weight:600; color:#5a9eff; }
+
+        /* Terminal */
+        #terminal {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 12px 0;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            color: #0f0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        #terminal .log-line { color: #aaa; }
+        #terminal .log-line.error { color: #f55; }
+        #terminal .log-line.success { color: #5f5; }
+        #terminal .log-line.info { color: #5af; }
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 6px 0;
+        }
+        .terminal-header button { background:#333; padding:4px 12px; font-size:12px; }
+        .terminal-header button:hover { background:#555; }
+
+        @media (max-width:500px) {
+            .container { padding:20px; }
+            .btn-group .btn { min-width:80px; }
+            .stats-grid { grid-template-columns:1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>
+        🛠️ Admin Panel
+        <small>AI Training Control</small>
+    </h1>
+
+    <!-- PIN Section -->
+    <div class="pin-section" id="pin-section">
+        <div class="form-group">
+            <label for="pin-input">Enter PIN</label>
+            <div class="flex-row">
+                <input type="password" id="pin-input" placeholder="Enter security PIN" />
+                <button class="btn" id="pin-submit" style="width:auto;">Unlock</button>
+            </div>
+        </div>
+        <div id="pin-status" class="status" style="border-left-color:#888;">Awaiting PIN</div>
+    </div>
+
+    <!-- Training Panel -->
+    <div class="panel-section hidden" id="panel-section">
+        
+        <!-- Model selection -->
+        <div class="form-group">
+            <label for="model-select">Model(s) to train (for manual training)</label>
+            <select id="model-select">
+                <option value="all">All (RNN + Markov + PatternMatcher + Transformer)</option>
+                <option value="rnn">RNN only</option>
+                <option value="markov">Markov only</option>
+                <option value="pattern">PatternMatcher only</option>
+                <option value="transformer">Transformer only</option>
+            </select>
+        </div>
+
+        <!-- Auto-Train Control -->
+        <div class="form-group" style="background: #1a2a3a; padding: 15px; border-radius: 8px; border: 1px solid #2a5a7a; margin-bottom: 25px;">
+            <label style="color: #5a9eff; font-weight: bold; font-size: 16px; margin-bottom: 8px;">🤖 Background Auto-Trainer</label>
+            <p style="font-size: 12px; color: #aaa; margin-bottom: 10px;">
+                Enter websites or Hugging Face datasets below. The AI will continuously fetch data and train in the background while you chat.
+            </p>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 250px;">
+                    <label style="font-size: 12px;">Websites (One URL per line)</label>
+                    <textarea id="auto-urls" rows="3" placeholder="https://example.com/text.txt" style="width:100%; background:#252525; border:1px solid #333; color:#fff; padding:8px; border-radius:6px; font-family: monospace;"></textarea>
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <label style="font-size: 12px;">HF Datasets (One ID per line)</label>
+                    <textarea id="auto-hf" rows="3" placeholder="HuggingFaceTB/everyday-conversations-llama3.1-2k" style="width:100%; background:#252525; border:1px solid #333; color:#fff; padding:8px; border-radius:6px; font-family: monospace;">HuggingFaceTB/everyday-conversations-llama3.1-2k</textarea>
+                </div>
+            </div>
+            
+            <div class="flex-row" style="margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                <div style="flex:1; min-width: 100px;">
+                    <label style="font-size: 12px;">Sleep (Mins)</label>
+                    <input type="number" id="auto-sleep" value="10" min="1" style="width:100%; padding:8px; background:#252525; border:1px solid #333; color:#fff; border-radius:6px;">
+                </div>
+                <div style="flex:1; min-width: 100px;">
+                    <label style="font-size: 12px;">Batch Size (HF)</label>
+                    <input type="number" id="auto-batch" value="20" min="1" style="width:100%; padding:8px; background:#252525; border:1px solid #333; color:#fff; border-radius:6px;">
+                </div>
+                <div style="flex:2; display:flex; gap:10px; align-items:flex-end; min-width: 200px;">
+                    <button class="btn" id="auto-start-btn" style="background:#2a7a5a; flex:1; padding: 10px;">▶ Start Auto-Train</button>
+                    <button class="btn" id="auto-stop-btn" style="background:#7a2a2a; flex:1; padding: 10px;" disabled>⏹ Stop</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Train from URL -->
+        <div class="form-group">
+            <label for="url-input">Manual Train from URL</label>
+            <div class="flex-row">
+                <input type="url" id="url-input" placeholder="https://example.com/text.txt" />
+                <button class="btn" id="train-url-btn" style="width:auto;">Train</button>
+            </div>
+            <div style="margin-top:6px;">
+                <button class="btn btn-secondary" id="sample-data-btn" style="width:auto; padding:6px 12px; font-size:13px;">📄 Use Sample RedPajama Text</button>
+            </div>
+        </div>
+
+        <!-- Train from File -->
+        <div class="form-group">
+            <label for="file-input">Manual Train from Files (select multiple)</label>
+            <div class="flex-row">
+                <input type="file" id="file-input" accept=".txt,.md,.json,.csv,.py,.js,.html" multiple />
+                <button class="btn" id="train-file-btn" style="width:auto;">Upload & Train</button>
+            </div>
+            <div class="file-info" id="file-info">No files selected.</div>
+        </div>
+
+        <!-- Train from SDK -->
+        <div class="form-group">
+            <label for="sdk-input">Manual Train from SDK (Hugging Face dataset)</label>
+            <div class="flex-row">
+                <input type="text" id="sdk-input" placeholder="e.g., HuggingFaceTB/everyday-conversations-llama3.1-2k" style="flex:2;" />
+                <input type="number" id="sdk-samples" placeholder="Samples" value="100" min="1" max="10000" style="flex:1; width:80px;" />
+                <button class="btn" id="train-sdk-btn" style="width:auto;">Fetch & Train</button>
+            </div>
+            <div style="font-size:12px;color:#666;margin-top:4px;">
+                Downloads a sample from the Hugging Face dataset and trains once.
+            </div>
+        </div>
+
+        <!-- Reset -->
+        <div class="form-group">
+            <button class="btn btn-danger" id="reset-btn">🗑️ Reset All Training Data</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <label style="margin:0;">📊 Current Training Statistics</label>
+                <button class="btn btn-secondary" id="refresh-stats-btn" style="width:auto; padding:6px 16px;">⟳ Refresh</button>
+            </div>
+            <div id="stats-container" class="stats-grid">
+                <div class="stat-card"><div class="stat-label">Pattern Rules</div><div class="stat-value">—</div></div>
+                <div class="stat-card"><div class="stat-label">Markov Entries</div><div class="stat-value">—</div></div>
+                <div class="stat-card"><div class="stat-label">Markov Vocab</div><div class="stat-value">—</div></div>
+                <div class="stat-card"><div class="stat-label">RNN</div><div class="stat-value">—</div><div class="stat-sub">Vocab: —</div></div>
+                <div class="stat-card transformer"><div class="stat-label">Transformer</div><div class="stat-value">—</div><div class="stat-sub">Vocab: —</div></div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div id="progress-container">
+            <div id="progress-text">
+                <span class="progress-message" id="progress-msg">Training in progress...</span>
+                <span class="progress-percent" id="progress-percent">0%</span>
+            </div>
+            <div id="progress-bar-bg">
+                <div id="progress-bar-fill" style="width:0%;"></div>
+            </div>
+        </div>
+
+        <!-- Terminal -->
+        <div class="terminal-header">
+            <label style="margin:0;">📟 Terminal</label>
+            <button id="clear-terminal-btn">Clear</button>
+        </div>
+        <div id="terminal"></div>
+
+        <div id="status-output" class="status">Ready</div>
+        <a href="index.html" class="back-link">← Back to Chat</a>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    //  CONFIG
+    // ============================================================
+    const API_BASE = '/api';
+
+    // ============================================================
+    //  DOM REFS
+    // ============================================================
+    const pinSection = document.getElementById('pin-section');
+    const panelSection = document.getElementById('panel-section');
+    const pinInput = document.getElementById('pin-input');
+    const pinSubmit = document.getElementById('pin-submit');
+    const pinStatus = document.getElementById('pin-status');
+    
+    const modelSelect = document.getElementById('model-select');
+    const urlInput = document.getElementById('url-input');
+    const trainUrlBtn = document.getElementById('train-url-btn');
+    const fileInput = document.getElementById('file-input');
+    const trainFileBtn = document.getElementById('train-file-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const statusOutput = document.getElementById('status-output');
+    const statsContainer = document.getElementById('stats-container');
+    const refreshStatsBtn = document.getElementById('refresh-stats-btn');
+    const fileInfo = document.getElementById('file-info');
+    const sampleDataBtn = document.getElementById('sample-data-btn');
+    const sdkInput = document.getElementById('sdk-input');
+    const sdkSamples = document.getElementById('sdk-samples');
+    const trainSdkBtn = document.getElementById('train-sdk-btn');
+
+    // Auto-Train Refs
+    const autoUrls = document.getElementById('auto-urls');
+    const autoHf = document.getElementById('auto-hf');
+    const autoSleep = document.getElementById('auto-sleep');
+    const autoBatch = document.getElementById('auto-batch');
+    const autoStartBtn = document.getElementById('auto-start-btn');
+    const autoStopBtn = document.getElementById('auto-stop-btn');
+
+    const progressContainer = document.getElementById('progress-container');
+    const progressMsg = document.getElementById('progress-msg');
+    const progressPercent = document.getElementById('progress-percent');
+    const progressFill = document.getElementById('progress-bar-fill');
+
+    const terminal = document.getElementById('terminal');
+    const clearTerminalBtn = document.getElementById('clear-terminal-btn');
+
+    // ============================================================
+    //  HELPERS
+    // ============================================================
+    function setStatus(message, type = 'info') {
+        statusOutput.textContent = message;
+        statusOutput.className = 'status';
+        if (type === 'error') statusOutput.classList.add('error');
+        else if (type === 'success') statusOutput.classList.add('success');
+        else statusOutput.classList.remove('error', 'success');
+    }
+
+    function setPinStatus(message, type = 'info') {
+        pinStatus.textContent = message;
+        pinStatus.className = 'status';
+        if (type === 'error') pinStatus.classList.add('error');
+        else if (type === 'success') pinStatus.classList.add('success');
+        else pinStatus.classList.remove('error', 'success');
+    }
+
+    // ============================================================
+    //  TERMINAL
+    // ============================================================
+    function appendTerminal(line, className = '') {
+        const div = document.createElement('div');
+        div.className = 'log-line' + (className ? ' ' + className : '');
+        div.textContent = line;
+        terminal.appendChild(div);
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    function clearTerminal() {
+        terminal.innerHTML = '';
+    }
+    clearTerminalBtn.addEventListener('click', clearTerminal);
+
+    let terminalPollInterval = null;
+    function startTerminalPolling() {
+        if (terminalPollInterval) clearInterval(terminalPollInterval);
+        terminalPollInterval = setInterval(async () => {
+            try {
+                const resp = await fetch('/api/training_log');
+                const data = await resp.json();
+                if (data.logs) {
+                    if (terminal.dataset.lastLog !== data.logs) {
+                        terminal.innerHTML = '';
+                        data.logs.split('\n').forEach(line => {
+                            if (line.trim()) {
+                                const div = document.createElement('div');
+                                div.className = 'log-line';
+                                div.textContent = line;
+                                terminal.appendChild(div);
+                            }
+                        });
+                        terminal.scrollTop = terminal.scrollHeight;
+                        terminal.dataset.lastLog = data.logs;
+                    }
+                }
+            } catch (e) { /* ignore */ }
+        }, 1500);
+    }
+
+    // ============================================================
+    //  PROGRESS BAR
+    // ============================================================
+    let progressInterval = null;
+    let currentProgress = 0;
+    let progressComplete = false;
+
+    function showProgress(message = 'Training in progress...') {
+        progressContainer.classList.add('active');
+        progressMsg.textContent = message;
+        currentProgress = 0;
+        progressComplete = false;
+        updateProgress(0);
+        if (progressInterval) clearInterval(progressInterval);
+        progressInterval = setInterval(() => {
+            if (progressComplete) return;
+            if (currentProgress < 95) {
+                const increment = 0.8 + Math.random() * 1.7;
+                currentProgress = Math.min(95, currentProgress + increment);
+                updateProgress(currentProgress);
+            }
+        }, 200);
+    }
+
+    function updateProgress(value) {
+        const clamped = Math.min(100, Math.max(0, value));
+        progressFill.style.width = clamped + '%';
+        progressPercent.textContent = Math.round(clamped) + '%';
+    }
+
+    function hideProgress() {
+        if (progressInterval) {
+            clearInterval(progressInterval);
+            progressInterval = null;
+        }
+        progressComplete = true;
+        updateProgress(100);
+        setTimeout(() => {
+            progressContainer.classList.remove('active');
+            updateProgress(0);
+        }, 600);
+    }
+
+    // ============================================================
+    //  API CALL WITH RETRY
+    // ============================================================
+    async function apiCall(endpoint, method = 'POST', body = null, retries = 3, timeout = 60000) {
+        let lastError = null;
+        for (let attempt = 0; attempt < retries; attempt++) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+                const options = {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: controller.signal,
+                };
+                if (body) options.body = JSON.stringify(body);
+
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`Server error (${response.status}): ${errText || response.statusText}`);
+                }
+                return await response.json();
+            } catch (err) {
+                lastError = err;
+                console.warn(`Attempt ${attempt + 1} failed:`, err.message);
+                if (attempt < retries - 1) {
+                    const wait = 2000 * (attempt + 1);
+                    await new Promise(resolve => setTimeout(resolve, wait));
+                }
+            }
+        }
+        throw lastError || new Error('Request failed after retries.');
+    }
+
+    // ============================================================
+    //  FETCH STATS
+    // ============================================================
+    async function fetchStats() {
+        try {
+            const stats = await apiCall('/stats', 'GET', null, 2, 10000);
+            const cards = statsContainer.querySelectorAll('.stat-card');
+            cards[0].querySelector('.stat-value').textContent = stats.pattern_rules ?? '0';
+            cards[1].querySelector('.stat-value').textContent = stats.markov_entries ?? '0';
+            cards[2].querySelector('.stat-value').textContent = stats.markov_vocab ?? '0';
+
+            const rnnValue = cards[3].querySelector('.stat-value');
+            const rnnSub   = cards[3].querySelector('.stat-sub');
+            if (stats.rnn_trained) {
+                rnnValue.textContent = '✅ Trained';
+                rnnSub.textContent = `Vocab: ${stats.rnn_vocab_size ?? 0}`;
+            } else {
+                rnnValue.textContent = '❌ Not trained';
+                rnnSub.textContent = 'Vocab: 0';
+            }
+
+            const tfValue = cards[4].querySelector('.stat-value');
+            const tfSub   = cards[4].querySelector('.stat-sub');
+            if (stats.transformer_trained) {
+                tfValue.textContent = '✅ Trained';
+                tfSub.textContent = `Vocab: ${stats.transformer_vocab ?? 0}`;
+            } else {
+                tfValue.textContent = '❌ Not trained';
+                tfSub.textContent = 'Vocab: 0';
+            }
+
+            return stats;
+        } catch (err) {
+            setStatus(`Failed to load stats: ${err.message}`, 'error');
+        }
+    }
+
+    // ============================================================
+    //  PIN
+    // ============================================================
+    pinSubmit.addEventListener('click', async () => {
+        const pin = pinInput.value.trim();
+        if (!pin) { setPinStatus('Please enter a PIN.', 'error'); return; }
+        setPinStatus('Verifying...', 'info');
+        try {
+            const result = await apiCall('/verify_pin', 'POST', { pin }, 2, 5000);
+            if (result.success) {
+                setPinStatus('✅ PIN accepted. Access granted.', 'success');
+                pinSection.classList.add('hidden');
+                panelSection.classList.remove('hidden');
+                setStatus('Ready for training commands.');
+                await fetchStats();
+                startTerminalPolling();
+                clearTerminal();
+                appendTerminal('🚀 Admin ready. Terminal active.', 'info');
+            } else {
+                setPinStatus('❌ Invalid PIN. Try again.', 'error');
+            }
+        } catch (err) {
+            setPinStatus(`❌ Error: ${err.message}`, 'error');
+        }
+    });
+    pinInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') pinSubmit.click(); });
+
+    // ============================================================
+    //  REFRESH STATS
+    // ============================================================
+    refreshStatsBtn.addEventListener('click', async () => {
+        refreshStatsBtn.disabled = true;
+        refreshStatsBtn.textContent = '⟳ Loading...';
+        await fetchStats();
+        refreshStatsBtn.disabled = false;
+        refreshStatsBtn.textContent = '⟳ Refresh';
+    });
+
+    // ============================================================
+    //  AUTO-TRAIN CONTROLS
+    // ============================================================
+    autoStartBtn.addEventListener('click', async () => {
+        const urls = autoUrls.value.split('\n').map(u => u.trim()).filter(u => u);
+        const hf_datasets = autoHf.value.split('\n').map(h => h.trim()).filter(h => h);
+        const sleep_mins = parseInt(autoSleep.value) || 10;
+        const batch_size = parseInt(autoBatch.value) || 20;
+
+        if (urls.length === 0 && hf_datasets.length === 0) {
+            setStatus("❌ Please provide at least one URL or HF Dataset.", "error");
+            return;
+        }
+
+        autoStartBtn.disabled = true;
+        autoStartBtn.textContent = 'Starting...';
+
+        try {
+            await apiCall('/auto_train/start', 'POST', { urls, hf_datasets, sleep_mins, batch_size });
+            setStatus("✅ Auto-Trainer started in the background! Check the terminal for progress.", "success");
+            autoStartBtn.textContent = '▶ Running...';
+            autoStopBtn.disabled = false;
+        } catch (err) {
+            setStatus(`❌ Failed to start Auto-Train: ${err.message}`, "error");
+            autoStartBtn.disabled = false;
+            autoStartBtn.textContent = '▶ Start Auto-Train';
+        }
+    });
+
+    autoStopBtn.addEventListener('click', async () => {
+        autoStopBtn.disabled = true;
+        autoStopBtn.textContent = 'Stopping...';
+        try {
+            await apiCall('/auto_train/stop', 'POST', {});
+            setStatus("🛑 Auto-Train stop signal sent. It will stop after the current batch.", "info");
+            autoStartBtn.disabled = false;
+            autoStartBtn.textContent = '▶ Start Auto-Train';
+            autoStopBtn.textContent = '⏹ Stop';
+        } catch (err) {
+            setStatus(`❌ Failed to stop: ${err.message}`, "error");
+            autoStopBtn.disabled = false;
+            autoStopBtn.textContent = '⏹ Stop';
+        }
+    });
+
+    // ============================================================
+    //  MANUAL TRAIN (URL, File, SDK)
+    // ============================================================
+    fileInput.addEventListener('change', () => {
+        const files = fileInput.files;
+        if (files.length === 0) {
+            fileInfo.textContent = 'No files selected.';
+        } else {
+            const names = Array.from(files).map(f => f.name).join(', ');
+            fileInfo.textContent = `📁 ${files.length} file(s): ${names}`;
+        }
+    });
+
+    async function performTraining(source, data) {
+        const model = modelSelect.value;
+        showProgress(`Training ${model} from ${source}...`);
+        setStatus(`⏳ Training ${model} from ${source}... (this may take a while)`, 'info');
+
+        try {
+            const result = await apiCall('/train', 'POST', {
+                model: model,
+                source: source,
+                data: data
+            }, 3, 120000);
+            hideProgress();
+            setStatus(`✅ ${result.message || 'Training completed successfully.'}`, 'success');
+            await fetchStats();
+            return result;
+        } catch (err) {
+            hideProgress();
+            setStatus(`❌ Training failed: ${err.message}`, 'error');
+            throw err;
+        }
+    }
+
+    trainUrlBtn.addEventListener('click', async () => {
+        const url = urlInput.value.trim();
+        if (!url) {
+            setStatus('Please enter a valid URL.', 'error');
+            return;
+        }
+        trainUrlBtn.disabled = true;
+        trainUrlBtn.textContent = 'Training...';
+        try {
+            await performTraining('url', { url });
+        } finally {
+            trainUrlBtn.disabled = false;
+            trainUrlBtn.textContent = 'Train';
+        }
+    });
+
+    trainFileBtn.addEventListener('click', async () => {
+        const files = fileInput.files;
+        if (files.length === 0) {
+            setStatus('Please select at least one file.', 'error');
+            return;
+        }
+
+        setStatus(`⏳ Reading ${files.length} file(s)...`, 'info');
+        trainFileBtn.disabled = true;
+        trainFileBtn.textContent = 'Uploading...';
+
+        try {
+            const readers = Array.from(files).map(file => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve({ name: file.name, content: e.target.result });
+                    reader.onerror = reject;
+                    reader.readAsText(file);
+                });
+            });
+            const results = await Promise.all(readers);
+            const combined = results.map(r =>
+                `--- START OF FILE: ${r.name} ---\n${r.content}\n--- END OF FILE: ${r.name} ---`
+            ).join('\n\n');
+
+            await performTraining('file', { filename: 'combined_files.txt', content: combined });
+        } catch (err) {
+            // error already handled
+        } finally {
+            trainFileBtn.disabled = false;
+            trainFileBtn.textContent = 'Upload & Train';
+        }
+    });
+
+    trainSdkBtn.addEventListener('click', async () => {
+        const dataset = sdkInput.value.trim();
+        if (!dataset) {
+            setStatus('Please enter a dataset ID.', 'error');
+            return;
+        }
+        const samples = parseInt(sdkSamples.value) || 100;
+        const model = modelSelect.value;
+
+        trainSdkBtn.disabled = true;
+        trainSdkBtn.textContent = 'Fetching...';
+
+        showProgress(`Fetching ${samples} samples from ${dataset}...`);
+        setStatus(`⏳ Fetching dataset ${dataset} (${samples} samples)...`, 'info');
+
+        try {
+            const result = await apiCall('/train_from_sdk', 'POST', {
+                dataset: dataset,
+                samples: samples,
+                model: model
+            }, 2, 300000);
+            hideProgress();
+            setStatus(`✅ ${result.message || 'Training from SDK completed.'}`, 'success');
+            await fetchStats();
+        } catch (err) {
+            hideProgress();
+            setStatus(`❌ SDK training failed: ${err.message}`, 'error');
+        } finally {
+            trainSdkBtn.disabled = false;
+            trainSdkBtn.textContent = 'Fetch & Train';
+        }
+    });
+
+    // ============================================================
+    //  SAMPLE DATA BUTTON
+    // ============================================================
+    sampleDataBtn.addEventListener('click', () => {
+        const sampleUrl = 'https://huggingface.co/datasets/togethercomputer/RedPajama-Data-1T/resolve/main/sample/redpajama_sample.txt?download=1';
+        urlInput.value = sampleUrl;
+        setStatus('Sample URL loaded. Click "Train" to start.', 'info');
+    });
+
+    // ============================================================
+    //  RESET
+    // ============================================================
+    resetBtn.addEventListener('click', async () => {
+        if (!confirm('⚠️ This will permanently delete all trained models and reset to defaults. Are you sure?')) return;
+        showProgress('Resetting training data...');
+        setStatus('⏳ Resetting training data...', 'info');
+        resetBtn.disabled = true;
+        resetBtn.textContent = 'Resetting...';
+        try {
+            const result = await apiCall('/reset', 'POST', {}, 3, 30000);
+            hideProgress();
+            setStatus(`✅ ${result.message || 'Reset successful.'}`, 'success');
+            await fetchStats();
+        } catch (err) {
+            hideProgress();
+            setStatus(`❌ Reset failed: ${err.message}`, 'error');
+        } finally {
+            resetBtn.disabled = false;
+            resetBtn.textContent = '🗑️ Reset All Training Data';
+        }
+    });
+
+    // ============================================================
+    //  INIT
+    // ============================================================
+    setPinStatus('Enter the admin PIN to continue.', 'info');
+    clearTerminal();
+    appendTerminal('🔒 Admin locked. Enter PIN to unlock.', 'info');
+</script>
+</body>
+</html>
